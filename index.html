@@ -1683,4 +1683,608 @@
 </script>
 
 </body>
+</html><!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Школа №45 • 6 «А» Класс (Калуга)</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --panel-bg: #1e1e1e;
+            --card-bg: #252525;
+            --text-color: #e0e0e0;
+            --text-muted: #aaa;
+            --accent-color: #4dabf7;
+            --border-color: #333;
+            --room-color: #ffa94d;
+            --danger-color: #ff6b6b;
+            --success-color: #51cf66;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 950px;
+            margin: 0 auto;
+            background: var(--panel-bg);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+            border: 1px solid var(--border-color);
+        }
+        #authScreen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(18, 18, 18, 0.95); display: flex;
+            justify-content: center; align-items: center; z-index: 1000;
+        }
+        .auth-box {
+            background: var(--panel-bg); padding: 30px; border-radius: 12px;
+            border: 1px solid var(--accent-color); width: 320px; text-align: center;
+        }
+        .site-header { text-align: center; margin-bottom: 25px; }
+        h1 { color: var(--accent-color); margin: 0 0 5px 0; font-size: 28px; }
+        .subtitle { color: var(--text-muted); font-size: 15px; }
+        .nav-tabs {
+            display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+            margin-bottom: 25px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;
+        }
+        .tab-btn {
+            background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color);
+            padding: 10px 14px; border-radius: 8px; cursor: pointer; font-size: 13px;
+        }
+        .tab-btn:hover, .tab-btn.active { background: var(--accent-color); color: #121212; font-weight: bold; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .hero-card { background: var(--card-bg); padding: 25px; border-radius: 12px; margin-bottom: 20px; border-left: 5px solid var(--accent-color); }
+        .days-nav { display: flex; gap: 5px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .day-tab-btn { background: #2a2a2a; color: var(--text-muted); border: 1px solid var(--border-color); padding: 8px 14px; border-radius: 6px; cursor: pointer; }
+        .day-tab-btn.active { background: var(--accent-color); color: #121212; font-weight: bold; }
+        .day-pane { display: none; background: var(--card-bg); border-left: 4px solid var(--accent-color); padding: 20px; border-radius: 0 8px 8px 0; }
+        .day-pane.active { display: block; }
+        ul { margin: 0; padding-left: 20px; }
+        li { margin-bottom: 8px; font-size: 15px; }
+        .room { color: var(--room-color); font-weight: bold; }
+        .homework-badge { display: block; margin-top: 15px; background: #2c2416; border: 1px dashed #ffa94d; padding: 10px; border-radius: 6px; color: #ffd8a8; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        th { color: var(--accent-color); }
+        .badge { background: #2b3a42; color: var(--accent-color); padding: 4px 8px; border-radius: 6px; font-size: 12px; }.admin-badge { background: #4a2b2b; color: var(--danger-color); }
+        .btn { background: var(--accent-color); color: #121212; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-danger { background: var(--danger-color); color: #fff; }
+        .btn-success { background: var(--success-color); color: #fff; }
+        .admin-panel-box { background: #28211b; border: 1px solid #ff922b; padding: 20px; border-radius: 12px; margin-top: 30px; display: none; }
+        .admin-section { background: #1e1e1e; padding: 15px; border-radius: 8px; margin-top: 15px; }
+        input, select, textarea { background: #121212; border: 1px solid var(--border-color); color: #fff; padding: 8px 12px; border-radius: 6px; margin: 5px 0; width: 100%; box-sizing: border-box; }
+        .poll-option { background: #2a2a2a; padding: 10px; border-radius: 6px; margin-top: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid var(--border-color); }
+        .poll-option:hover { border-color: var(--accent-color); }
+        .avatar-img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+    </style>
+</head>
+<body>
+
+    <div id="authScreen">
+        <div class="auth-box">
+            <h3 style="color: var(--accent-color); margin-top:0;">Вход / Регистрация 6 «А»</h3>
+            <p style="font-size: 13px; color: var(--text-muted);">Введите ФИО и пароль:</p>
+            <input type="text" id="authName" placeholder="Фамилия и Имя">
+            <input type="password" id="authPassword" placeholder="Ваш личный пароль">
+            <button class="btn" id="authBtn" onclick="handleAuth()" style="width: 100%; margin-top: 10px;">Войти в систему</button>
+            <button class="btn" onclick="resetPassword()" style="background:transparent; color:var(--text-muted); border:none; margin-top:10px; font-size:12px; cursor:pointer;">Сбросить пароль</button>
+        </div>
+    </div>
+
+<div class="container">
+    <div class="site-header">
+        <h1>Школа №45 • 6 «А» Класс</h1>
+        <div class="subtitle">г. Калуга | Пользователь: <span id="currentUserDisplay" style="color: var(--accent-color);"></span></div>
+    </div>
+
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('main', event)">Главная</button>
+        <button class="tab-btn" onclick="switchTab('schedule', event)">Расписание и ДЗ</button>
+        <button class="tab-btn" onclick="switchTab('news', event)">Новости и фото</button>
+        <button class="tab-btn" onclick="switchTab('students', event)">Участники</button>
+        <button class="tab-btn" onclick="switchTab('attendance', event)">Присутствие</button>
+        <button class="tab-btn" onclick="switchTab('polls', event)">Опросы</button>
+        <button class="tab-btn" onclick="switchTab('files', event)">Файлы</button>
+        <button class="tab-btn" onclick="switchTab('profile', event)">⚙️ Профиль</button>
+        <button class="tab-btn" onclick="openAdmin()" style="border-color: var(--accent-color);">🔒 Админка</button>
+    </div>
+
+    <div id="main" class="tab-content active">
+        <div class="hero-card">
+            <h2>Добро пожаловать в 6 «А» класс!</h2>
+            <p>МБОУ «СОШ №45» города Калуги. Официальный портал.</p>
+        </div>
+        <div class="hero-card" style="border-left-color: var(--success-color);">
+            <h3 style="margin-top:0; color: var(--success-color);">⏱️ Таймер уроков</h3>
+            <div id="timerStatus" style="font-size: 16px; font-weight: bold;">Загрузка...</div>
+        </div>
+    </div>
+
+    <div id="schedule" class="tab-content">
+        <h2 style="color: var(--accent-color); text-align: center;">📅 Расписание уроков и ДЗ</h2>
+        <div class="days-nav">
+            <button class="day-tab-btn active" onclick="switchDay('mon', event)">Понедельник</button>
+            <button class="day-tab-btn" onclick="switchDay('tue', event)">Вторник</button><button class="day-tab-btn" onclick="switchDay('wed', event)">Среда</button>
+            <button class="day-tab-btn" onclick="switchDay('thu', event)">Четверг</button>
+            <button class="day-tab-btn" onclick="switchDay('fri', event)">Пятница</button>
+        </div>
+
+        <div id="mon" class="day-pane active">
+            <h3>Понедельник</h3>
+            <ul>
+                <li>12:30 - 13:10 — Разговоры о важном (<span class="room">к22</span>)</li>
+                <li>13:20 - 14:00 — Математика (<span class="room">к22</span>)</li>
+                <li>14:10 - 14:50 — Биология (<span class="room">к8</span>)</li>
+                <li>15:00 - 15:40 — Иностранный (английский) язык (<span class="room">к34</span>)</li>
+                <li>15:50 - 16:30 — Математика (<span class="room">к22</span>)</li>
+                <li>16:40 - 17:20 — Русский язык (<span class="room">к23</span>)</li>
+                <li>17:30 - 18:10 — Литература (<span class="room">к23</span>)</li>
+            </ul>
+            <div class="homework-badge" id="hw-mon">📚 ДЗ: Загрузка...</div>
+        </div>
+        <div id="tue" class="day-pane">
+            <h3>Вторник</h3>
+            <ul>
+                <li>09:00 - 09:40 — Искусственный интеллект и информационная безопасность (<span class="room">к9</span>)</li>
+                <li>09:50 - 10:35 — Проектория (<span class="room">к21нш</span>)</li>
+                <li>13:20 - 14:00 — Математика (<span class="room">к22</span>)</li>
+                <li>14:10 - 14:50 — Русский язык (<span class="room">к23</span>)</li>
+                <li>15:00 - 15:40 — Биология (<span class="room">к8</span>)</li>
+                <li>15:50 - 16:30 — Литература (<span class="room">к23</span>)</li>
+                <li>16:40 - 17:20 — История (<span class="room">к19</span>)</li>
+                <li>17:30 - 18:10 — Изобразительное искусство (<span class="room">к15</span>)</li>
+            </ul>
+            <div class="homework-badge" id="hw-tue">📚 ДЗ: Загрузка...</div>
+        </div>
+        <div id="wed" class="day-pane">
+            <h3>Среда</h3>
+            <ul>
+                <li>13:20 - 14:00 — Русский язык (<span class="room">к23</span>)</li>
+                <li>14:10 - 14:50 — Математика (<span class="room">к22</span>)</li>
+                <li>15:00 - 15:40 — Труд (технология) (<span class="room">к9</span>)</li>
+                <li>15:50 - 16:30 — Труд (технология) (<span class="room">к9</span>)</li>
+                <li>16:40 - 17:20 — Физическая культура (<span class="room">к38</span>)</li>
+                <li>17:30 - 18:10 — Русский язык (<span class="room">к23</span>)</li>
+            </ul>
+            <div class="homework-badge" id="hw-wed">📚 ДЗ: Загрузка...</div>
+        </div>
+        <div id="thu" class="day-pane">
+            <h3>Четверг</h3>
+            <ul>
+                <li>12:30 - 13:10 — Россия - мои горизонты (<span class="room">к22</span>)</li>
+                <li>13:20 - 14:00 — Математика (<span class="room">к22</span>)</li>
+                <li>14:10 - 14:50 — Литература (<span class="room">к23</span>)</li>
+                <li>15:00 - 15:40 — Иностранный (английский) язык (<span class="room">к34</span>)</li>
+                <li>15:50 - 16:30 — География (<span class="room">к15</span>)</li>
+                <li>16:40 - 17:20 — История (<span class="room">к21</span>)</li>
+            </ul>
+            <div class="homework-badge" id="hw-thu">📚 ДЗ: Загрузка...</div>
+        </div>
+        <div id="fri" class="day-pane">
+            <h3>Пятница</h3>
+            <ul>
+                <li>12:30 - 13:10 — Физическая культура (<span class="room">к38</span>)</li>
+                <li>13:20 - 14:00 — Введение в информатику (<span class="room">к39</span>)</li>
+                <li>14:10 - 14:50 — Русский язык (<span class="room">к23</span>)</li>
+                <li>15:00 - 15:40 — Иностранный (английский) язык (<span class="room">к34</span>)</li><li>15:50 - 16:30 — Русский язык (<span class="room">к23</span>)</li>
+                <li>16:40 - 17:20 — История (<span class="room">к19</span>)</li>
+                <li>17:30 - 18:10 — Музыка (<span class="room">к15</span>)</li>
+            </ul>
+            <div class="homework-badge" id="hw-fri">📚 ДЗ: Загрузка...</div>
+        </div>
+    </div>
+
+    <div id="news" class="tab-content">
+        <h2 style="color: var(--accent-color);">📰 Новости и галерея класса</h2>
+        <div id="photoGallery" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap:20px; margin-top:15px;"></div>
+    </div>
+
+    <div id="students" class="tab-content">
+        <h2 style="color: var(--accent-color);">👥 Участники класса</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Аватар</th>
+                    <th>Имя / Ник</th>
+                    <th>Роль</th>
+                    <th class="admin-only" style="display:none;">Действия</th>
+                </tr>
+            </thead>
+            <tbody id="studentsList"></tbody>
+        </table>
+    </div>
+
+    <div id="attendance" class="tab-content">
+        <h2 style="color: var(--accent-color);">📋 Кто сегодня в школе</h2>
+        <button class="btn btn-success" onclick="toggleAttendance()">Отметиться в школе</button>
+        <table style="margin-top:20px;">
+            <thead><tr><th>Ученик</th><th>Статус</th></tr></thead>
+            <tbody id="attendanceList"></tbody>
+        </table>
+    </div>
+
+    <div id="polls" class="tab-content">
+        <h2 style="color: var(--accent-color);">📊 Голосования класса</h2>
+        <div id="pollsContainer"></div>
+    </div>
+
+    <div id="files" class="tab-content">
+        <h2 style="color: var(--accent-color);">📁 Полезные материалы</h2>
+        <div id="filesContainer" style="margin-top: 15px;"></div>
+    </div>
+
+    <div id="profile" class="tab-content">
+        <h2 style="color: var(--accent-color);">⚙️ Настройки личного профиля</h2>
+        <div class="hero-card" style="max-width: 400px;">
+            <p>Изменить никнейм или аватарку:</p>
+            <input type="text" id="newNickInput" placeholder="Новый ник / Имя">
+            <input type="text" id="newAvatarInput" placeholder="Ссылка на фото (аватар URL)">
+            <button class="btn" onclick="saveProfileSettings()" style="margin-top: 10px; width: 100%;">Сохранить профиль</button>
+            <button class="btn btn-danger" onclick="logoutUser()" style="margin-top: 10px; width: 100%;">Выйти из аккаунта</button>
+        </div>
+    </div>
+
+    <div id="adminPanel" class="admin-panel-box">
+        <h3 style="color: #ffa94d; margin-top: 0;">🛠️ Панель администратора</h3>
+        <div class="admin-section">
+            <h4>📝 Управление ДЗ</h4>
+            <select id="hwDaySelect">
+                <option value="mon">Понедельник</option><option value="tue">Вторник</option><option value="wed">Среда</option><option value="thu">Четверг</option><option value="fri">Пятница</option>
+            </select>
+            <textarea id="hwInputText" placeholder="Текст ДЗ..."></textarea>
+            <button class="btn" onclick="saveHomeworkCloud()" style="margin-top: 5px;">Обновить ДЗ</button>
+        </div>
+        <div class="admin-section">
+            <h4>📸 Опубликовать фото</h4>
+            <input type="text" id="photoUrl" placeholder="Ссылка на картинку URL">
+            <input type="text" id="photoDesc" placeholder="Описание">
+            <button class="btn" onclick="addPhotoCloud()" style="margin-top: 10px;">Опубликовать</button>
+        </div>
+        <div class="admin-section">
+            <h4>📊 Создать опрос</h4>
+            <input type="text" id="pollQuestion" placeholder="Вопрос">
+            <input type="text" id="pollOpt1" placeholder="Вариант 1">
+            <input type="text" id="pollOpt2" placeholder="Вариант 2">
+            <button class="btn" onclick="createPollCloud()" style="margin-top: 10px;">Запустить</button></div>
+        <div class="admin-section">
+            <h4>📁 Добавить файл</h4>
+            <input type="text" id="fileTitle" placeholder="Название файла">
+            <input type="text" id="fileLink" placeholder="Ссылка">
+            <button class="btn" onclick="addFileCloud()" style="margin-top: 10px;">Добавить</button>
+        </div>
+        <div style="text-align: right; margin-top: 20px;">
+            <button class="btn btn-danger" onclick="logoutAdmin()">Выйти из админки</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = { databaseURL: "https://school45-6a-default-rtdb.firebaseio.com/" };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let currentUser = localStorage.getItem("classUser") || null;
+    let isAdmin = localStorage.getItem("isAdminLoggedIn") === "true";
+
+    window.onload = function() {
+        if (!currentUser) {
+            document.getElementById('authScreen').style.display = 'flex';
+        } else {
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('currentUserDisplay').textContent = currentUser;
+        }
+        initCloudSync();
+        startTimer();
+        if(isAdmin) document.getElementById('adminPanel').style.display = 'block';
+    }
+
+    // Исправленный метод входа без зависания
+    function handleAuth() {
+        let name = document.getElementById('authName').value.trim();
+        let pass = document.getElementById('authPassword').value.trim();
+        if(!name || !pass) { alert("Введите имя и пароль!"); return; }
+
+        let btn = document.getElementById('authBtn');
+        btn.disabled = true;
+        btn.textContent = "Проверка...";
+
+        // Защита от зависания: если база данных отвечает долго, через 3 секунды кнопка сбросится
+        let safetyTimer = setTimeout(() => {
+            btn.disabled = false;
+            btn.textContent = "Войти в систему";
+        }, 3000);
+
+        if(name.toLowerCase().includes("андрей") && pass === "Andrey578000@") {
+            localStorage.setItem("isAdminLoggedIn", "true");
+            isAdmin = true;
+        }
+
+        db.ref('users/' + name).once('value').then(snapshot => {
+            clearTimeout(safetyTimer);
+            let userData = snapshot.val();
+            
+            if(userData && userData.pass && userData.pass !== pass) {
+                alert("Неверный пароль!");
+                btn.disabled = false;
+                btn.textContent = "Войти в систему";
+                return;
+            }
+
+            if(!userData) {
+                db.ref('users/' + name).set({ pass: pass, avatar: "https://via.placeholder.com/40" });
+            }
+
+            localStorage.setItem("classUser", name);
+            currentUser = name;
+
+            db.ref('students').once('value').then(snap => {
+                let students = snap.val() || [];
+                if(!students.some(s => s.name === name)) {
+                    let role = isAdmin ? "Администратор" : "Ученик";
+                    students.push({name: name, role: role, avatar: "https://via.placeholder.com/40"});
+                    db.ref('students').set(students);
+                }
+                location.reload();
+            });
+        }).catch(err => {
+            clearTimeout(safetyTimer);
+            // Если нет интернета или блокировка сети, всё равно пускаем локально
+            localStorage.setItem("classUser", name);
+            location.reload();
+        });
+    }
+
+    function resetPassword() {
+        let name = document.getElementById('authName').value.trim();
+        if(!name) { alert("Введите ваше Имя и Фамилию в поле выше, чтобы сбросить пароль!"); return; }
+        let newPass = prompt("Введите новый пароль для аккаунта " + name + ":");
+        if(newPass) {
+            db.ref('users/' + name + '/pass').set(newPass);
+            alert("Пароль успешно сброшен! Теперь можете войти с новым паролем.");
+        }
+    }
+
+    function logoutUser() {localStorage.removeItem("classUser");
+        localStorage.removeItem("isAdminLoggedIn");
+        location.reload();
+    }
+
+    function saveProfileSettings() {
+        let newNick = document.getElementById('newNickInput').value.trim();
+        let newAvatar = document.getElementById('newAvatarInput').value.trim();
+        if(newNick && newNick !== currentUser) {
+            db.ref('students').once('value', snap => {
+                let students = snap.val() || [];
+                students.forEach(s => { if(s.name === currentUser) s.name = newNick; });
+                db.ref('students').set(students);
+            });
+            localStorage.setItem("classUser", newNick);
+            currentUser = newNick;
+        }
+        if(newAvatar) {
+            db.ref('students').once('value', snap => {
+                let students = snap.val() || [];
+                students.forEach(s => { if(s.name === currentUser) s.avatar = newAvatar; });
+                db.ref('students').set(students);
+            });
+        }
+        alert("Профиль обновлен!");
+        location.reload();
+    }
+
+    function initCloudSync() {
+        db.ref('students').on('value', snapshot => {
+            let students = snapshot.val() || [];
+            const tbody = document.getElementById('studentsList');
+            tbody.innerHTML = '';
+            students.forEach((s, index) => {
+                let tr = document.createElement('tr');
+                let adminActions = isAdmin ? `<td><button class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;" onclick="removeStudentCloud(${index})">Удалить</button></td>` : '';
+                let avatar = s.avatar || "https://via.placeholder.com/40";
+                tr.innerHTML = `<td><img src="${avatar}" class="avatar-img"></td><td>${s.name}</td><td><span class="${s.role === 'Администратор' ? 'badge admin-badge' : 'badge'}">${s.role}</span></td>${adminActions}`;
+                tbody.appendChild(tr);
+            });
+            document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? 'table-cell' : 'none');
+        });
+
+        db.ref('homework').on('value', snapshot => {
+            let hw = snapshot.val() || {};
+            for (let day in hw) {
+                let badge = document.getElementById(`hw-${day}`);
+                if(badge) badge.textContent = `📚 ДЗ: ${hw[day]}`;
+            }
+        });
+
+        db.ref('photos').on('value', snapshot => {
+            let photos = snapshot.val() || [];
+            const gallery = document.getElementById('photoGallery');
+            gallery.innerHTML = '';
+            photos.forEach((p, pIndex) => {
+                let card = document.createElement('div');
+                card.style.background = "var(--card-bg)"; card.style.borderRadius = "8px"; card.style.overflow = "hidden"; card.style.border = "1px solid var(--border-color)";
+                let likesCount = p.likes ? Object.keys(p.likes).length : 0;
+                let commentsHtml = '';
+                if(p.comments) { p.comments.forEach(c => { commentsHtml += `<div style="font-size:12px; color:#ccc; margin-top:4px;"><b>${c.user}:</b> ${c.text}</div>`; }); }
+                card.innerHTML = `
+                    <img src="${p.url}" style="width:100%; height:160px; object-fit:cover;">
+                    <div style="padding:12px;">
+                        <p style="margin:0; font-size:14px;">${p.desc}</p>
+                        <button class="btn" style="margin-top:10px; padding:4px 10px; font-size:12px;" onclick="likePhoto(${pIndex})">❤️ Нравится (${likesCount})</button>
+                        <div style="margin-top:10px; border-top:1px solid #333; padding-top:8px;">
+                            <div style="max-height:80px; overflow-y:auto;">${commentsHtml || '<span style="color:#777; font-size:12px;">Нет комментариев</span>'}</div>
+                            <div style="display:flex; margin-top:8px; gap:5px;"><input type="text" id="comm-${pIndex}" placeholder="Комментарий..." style="margin:0; font-size:12px; padding:4px;">
+                                <button class="btn" style="padding:4px 8px; font-size:12px;" onclick="addComment(${pIndex})">Отпр</button>
+                            </div>
+                        </div>
+                    </div>`;
+                gallery.appendChild(card);
+            });
+        });
+
+        db.ref('attendance').on('value', snapshot => {
+            let att = snapshot.val() || {};
+            const attList = document.getElementById('attendanceList');
+            attList.innerHTML = '';
+            for(let user in att) { attList.innerHTML += `<tr><td>${user}</td><td><span class="badge" style="background:#1b3a2b; color:#51cf66;">В школе ✓</span></td></tr>`; }
+        });
+
+        db.ref('polls').on('value', snapshot => {
+            let polls = snapshot.val() || [];
+            const container = document.getElementById('pollsContainer');
+            container.innerHTML = '';
+            polls.forEach((poll, pIdx) => {
+                container.innerHTML = `
+                    <div class="hero-card">
+                        <h3>📊 ${poll.question}</h3>
+                        <div class="poll-option" onclick="votePoll(${pIdx}, 1)"><span>${poll.opt1}</span> <b>${poll.votes1 || 0} голосов</b></div>
+                        <div class="poll-option" onclick="votePoll(${pIdx}, 2)"><span>${poll.opt2}</span> <b>${poll.votes2 || 0} голосов</b></div>
+                    </div>`;
+            });
+        });
+
+        db.ref('files').on('value', snapshot => {
+            let files = snapshot.val() || [];
+            const fContainer = document.getElementById('filesContainer');
+            fContainer.innerHTML = '';
+            files.forEach(f => {
+                fContainer.innerHTML += `<div class="hero-card" style="padding:15px; display:flex; justify-content:space-between; align-items:center;">
+                    <span>📄 ${f.title}</span><a href="${f.link}" target="_blank" class="btn" style="text-decoration:none; font-size:13px;">Открыть</a></div>`;
+            });
+        });
+    }
+
+    function switchTab(tabId, event) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        if(event) event.target.classList.add('active');
+    }
+
+    function switchDay(dayId, event) {
+        document.querySelectorAll('.day-pane').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.day-tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(dayId).classList.add('active');
+        if(event) event.target.classList.add('active');
+    }
+
+    function openAdmin() {
+        let pwd = prompt("Введите пароль администратора:");
+        if (pwd === "Andrey578000@") {
+            localStorage.setItem("isAdminLoggedIn", "true");
+            isAdmin = true;
+            document.getElementById('adminPanel').style.display = 'block';
+            alert("Успешный вход!");
+            location.reload();
+        } else if (pwd !== null) { alert("Неверный пароль!"); }
+    }
+
+    function logoutAdmin() {
+        localStorage.removeItem("isAdminLoggedIn");
+        isAdmin = false;
+        document.getElementById('adminPanel').style.display = 'none';
+        location.reload();
+    }
+
+    function saveHomeworkCloud() {
+        let day = document.getElementById('hwDaySelect').value;
+        let text = document.getElementById('hwInputText').value.trim();
+        if(text) { db.ref('homework/' + day).set(text); document.getElementById('hwInputText').value = ''; alert("ДЗ обновлено!"); }
+    }
+
+    function addPhotoCloud() {
+        let url = document.getElementById('photoUrl').value.trim();let desc = document.getElementById('photoDesc').value.trim();
+        if(url && desc) {
+            db.ref('photos').once('value', snapshot => {
+                let photos = snapshot.val() || [];
+                photos.push({url, desc});
+                db.ref('photos').set(photos);
+            });
+            document.getElementById('photoUrl').value = ''; document.getElementById('photoDesc').value = ''; alert("Фото опубликовано!");
+        }
+    }
+
+    function likePhoto(index) {
+        let safeUserKey = currentUser.replace(/[.#$\/\[\]]/g, "_");
+        db.ref(`photos/${index}/likes/${safeUserKey}`).transaction(val => (val ? null : true));
+    }
+
+    function addComment(index) {
+        let text = document.getElementById(`comm-${index}`).value.trim();
+        if(text) {
+            db.ref(`photos/${index}/comments`).once('value', snapshot => {
+                let comments = snapshot.val() || [];
+                comments.push({user: currentUser, text: text});
+                db.ref(`photos/${index}/comments`).set(comments);
+                document.getElementById(`comm-${index}`).value = '';
+            });
+        }
+    }
+
+    function toggleAttendance() {
+        let ref = db.ref(`attendance/${currentUser}`);
+        ref.once('value', snapshot => {
+            if(snapshot.exists()) { ref.remove(); alert("Отметка снята."); }
+            else { ref.set(true); alert("Отмечено в школе!"); }
+        });
+    }
+
+    function createPollCloud() {
+        let q = document.getElementById('pollQuestion').value.trim();
+        let o1 = document.getElementById('pollOpt1').value.trim();
+        let o2 = document.getElementById('pollOpt2').value.trim();
+        if(q && o1 && o2) { db.ref('polls').set([{question: q, opt1: o1, opt2: o2, votes1: 0, votes2: 0}]); alert("Опрос запущен!"); }
+    }
+
+    function votePoll(pIdx, optNum) {
+        db.ref(`polls/${pIdx}/votes${optNum}`).transaction(val => (val || 0) + 1);
+        alert("Голос учтен!");
+    }
+
+    function addFileCloud() {
+        let title = document.getElementById('fileTitle').value.trim();
+        let link = document.getElementById('fileLink').value.trim();
+        if(title && link) {
+            db.ref('files').once('value', snapshot => {
+                let files = snapshot.val() || [];
+                files.push({title, link});
+                db.ref('files').set(files);
+            });
+            document.getElementById('fileTitle').value = ''; document.getElementById('fileLink').value = ''; alert("Файл добавлен!");
+        }
+    }
+
+    function removeStudentCloud(index) {
+        db.ref('students').once('value', snapshot => {
+            let students = snapshot.val() || [];
+            students.splice(index, 1);
+            db.ref('students').set(students);
+        });
+    }
+
+    function startTimer() {
+        setInterval(() => {
+            let now = new Date();
+            let hours = now.getHours();
+            let mins = now.getMinutes();
+            let totalMins = hours * 60 + mins;
+            let statusText = "Уроков нет";
+            if(totalMins >= 750 && totalMins < 790) statusText = "🟢 1-й урок";
+            else if(totalMins >= 790 && totalMins < 800) statusText = "🟡 Перемена";
+            else if(totalMins >= 800 && totalMins < 840) statusText = "🟢 2-й урок";
+            document.getElementById('timerStatus').textContent = statusText + ` (${now.toLocaleTimeString()})`;
+        }, 1000);
+    }
+</script>
+
+</body>
 </html>
